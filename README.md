@@ -9,7 +9,11 @@ Currently, does not support converting gridrefs into Geospatial primitives, as p
 ## Examples
 
 ```sql
-select osgb('SO892437');
+select osgb_from_string('SO892437');
+---
+SO892437
+
+select osgb_from_eastings_northings(389200, 243700, 100);
 ---
 SO892437
 

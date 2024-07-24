@@ -31,10 +31,22 @@ impl InOutFuncs for OSI {
 }
 
 #[pg_extern]
-fn osi(string: &str) -> OSI {
+pub fn osi_from_eastings_northings(eastings: i32, northings: i32, precision: i32) -> OSI {
+    match gridish::OSI::new(
+        eastings as u32,
+        northings as u32,
+        parse_precision(precision),
+    ) {
+        Ok(grid) => OSI(grid),
+        Err(e) => error!("Invalid grid reference: {}", e),
+    }
+}
+
+#[pg_extern]
+pub fn osi_from_string(string: &str) -> OSI {
     match gridish::OSI::from_str(string) {
         Ok(grid) => OSI(grid),
-        Err(e) => error!("{}", e),
+        Err(e) => error!("Invalid grid reference: {}", e),
     }
 }
 
@@ -45,7 +57,11 @@ pub fn osi_precision(grid: OSI) -> i32 {
 
 #[pg_extern]
 pub fn osi_recalculate(grid: OSI, precision: i32) -> OSI {
-    let precision = match precision {
+    OSI(grid.0.recalculate(parse_precision(precision)))
+}
+
+fn parse_precision(precision: i32) -> Precision {
+    match precision {
         1 => Precision::_1M,
         10 => Precision::_10M,
         100 => Precision::_100M,
@@ -53,9 +69,7 @@ pub fn osi_recalculate(grid: OSI, precision: i32) -> OSI {
         10000 => Precision::_10Km,
         100000 => Precision::_100Km,
         _ => error!("{} is not a supported precision.", precision),
-    };
-
-    OSI(grid.0.recalculate(precision))
+    }
 }
 
 #[cfg(any(test, feature = "pg_test"))]
@@ -64,13 +78,34 @@ mod tests {
     use crate::osi::*;
 
     #[pg_test]
+    fn test_osi_from_eastings_northings() {
+        assert_eq!(
+            "O892437",
+            osi_from_eastings_northings(389_200, 243_700, 100)
+                .0
+                .to_string()
+        );
+    }
+
+    #[pg_test]
+    fn test_osi_from_string() {
+        assert_eq!("O892437", osi_from_string("O892437").0.to_string());
+    }
+
+    #[pg_test]
     fn test_osi_precision() {
-        assert_eq!(100, osi_precision(osi("O892437")));
+        assert_eq!(100, osi_precision(osi_from_string("O892437")));
     }
 
     #[pg_test]
     fn test_osi_recalculate() {
-        assert_eq!(osi("O8943"), osi_recalculate(osi("O892437"), 1000));
-        assert_eq!(osi("O892437"), osi_recalculate(osi("O892437"), 1));
+        assert_eq!(
+            osi_from_string("O8943"),
+            osi_recalculate(osi_from_string("O892437"), 1000)
+        );
+        assert_eq!(
+            osi_from_string("O892437"),
+            osi_recalculate(osi_from_string("O892437"), 1)
+        );
     }
 }
