@@ -1,5 +1,6 @@
 mod osgb;
 mod osi;
+mod shared;
 
 pub use osgb::*;
 pub use osi::*;
