@@ -4,7 +4,6 @@ mod shared;
 
 pub use osgb::*;
 pub use osi::*;
-use pgrx::prelude::*;
 
 pgrx::pg_module_magic!();
 
@@ -16,6 +15,7 @@ pub mod pg_test {
         // perform one-off initialization when the pg_test framework starts
     }
 
+    #[must_use]
     pub fn postgresql_conf_options() -> Vec<&'static str> {
         // return any postgresql.conf settings that are required for your tests
         vec![]
