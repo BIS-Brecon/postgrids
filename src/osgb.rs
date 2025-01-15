@@ -52,6 +52,14 @@ pub fn osgb_from_string(string: &str) -> OSGB {
 }
 
 #[pg_extern]
+pub fn osgb_is_valid(string: &str) -> bool {
+    match gridish::OSGB::from_str(string) {
+        Ok(_) => true,
+        Err(_) => false,
+    }
+}
+
+#[pg_extern]
 pub fn osgb_precision(grid: OSGB) -> i32 {
     grid.0.precision().metres() as i32
 }
@@ -79,6 +87,12 @@ mod tests {
     #[pg_test]
     fn test_osgb_from_string() {
         assert_eq!("SO892437", osgb_from_string("SO892437").0.to_string());
+    }
+
+    #[pg_test]
+    fn test_osgb_is_valid() {
+        assert_eq!(true, osgb_is_valid("SO892437"));
+        assert_eq!(false, osgb_is_valid("SO89243"));
     }
 
     #[pg_test]

@@ -52,6 +52,14 @@ pub fn osi_from_string(string: &str) -> OSI {
 }
 
 #[pg_extern]
+pub fn osi_is_valid(string: &str) -> bool {
+    match gridish::OSI::from_str(string) {
+        Ok(_) => true,
+        Err(_) => false,
+    }
+}
+
+#[pg_extern]
 pub fn osi_precision(grid: OSI) -> i32 {
     grid.0.precision().metres() as i32
 }
@@ -79,6 +87,12 @@ mod tests {
     #[pg_test]
     fn test_osi_from_string() {
         assert_eq!("O892437", osi_from_string("O892437").0.to_string());
+    }
+
+    #[pg_test]
+    fn test_osi_is_valid() {
+        assert_eq!(true, osi_is_valid("O892437"));
+        assert_eq!(false, osi_is_valid("O89243"));
     }
 
     #[pg_test]
